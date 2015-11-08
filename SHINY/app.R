@@ -37,47 +37,55 @@ library(shiny)
 #what the app will actually do:
 
 ui <- fluidPage(
-
-	titlePanel("Image reconstruction with PCA"),
-
-#INPUTS
-#interesting inputs for our project to be discovered: fileInput(to upload your own pic), selectInput: for choosing pic)(
-
-#a slider to choose number of principal components
-	sliderInput(
-		inputId = "numPCs", 
-		label = "Choose number of PCs", 
-		value = 40, min = 1, max = 100), #here we should have MAX set to the number of possible PCs of each specific picture (should read it each time)
-
-###THIS DOES NOT WORK YET, TO BE ADJUSTED!###
-
-#this does not generate error but apparently does not work yet:
-#a select list to choose a pic
-	selectInput(
-		InputId = "image",
-		label = "Choose image",
-		choices = c("Lisbon" = "lisbon", "Mona Lisa" = "monalisa"),
-		multiple = FALSE),
-
-#a select list to choose between correlation and covariance
-#	selectInput(
-#		InputId = "CorCov",
-#		label = "Choose correlation or covariance",
-#		choices = c("Correlation" = "cor", "Covariance" = "cov"),
-#		multiple = FALSE),
-
-##if possible, it would be good to add an option to upload your own picture!
-
-
-#OUTPUTS
-#interesting outputs for our project: dataTableOutput(): an interactive table, imageOutput(), plotOutput(), textOutput()
-	imageOutput("result")
+  
+  titlePanel("Image reconstruction with PCA"),
+  
+  #INPUTS
+  #interesting inputs for our project to be discovered: fileInput(to upload your own pic), selectInput: for choosing pic)(
+  sidebarLayout(
+    sidebarPanel( 
+      #a slider to choose number of principal components
+      sliderInput(
+        inputId = "numPCs", 
+        label = "Choose number of PCs", 
+        value = 40, min = 1, max = 100), #here we should have MAX set to the number of possible PCs of each specific picture (should read it each time)
+      #it is maximized down, in the server side
+      
+      ###THIS DOES NOT WORK YET, TO BE ADJUSTED!###
+      
+      #this does not generate error but apparently does not work yet:
+      #a select list to choose a pic
+      selectInput(
+        "image",
+        label = "Choose image",
+        choices = c("Lisbon" = "lisbon", "Mona Lisa" = "monalisa"),
+        multiple = FALSE),
+      
+      #a select list to choose between correlation and covariance
+      selectInput(
+      "CorCov",
+      label = "Choose correlation or covariance",
+      choices = c("Correlation" = "cor", "Covariance" = "cov"),
+      multiple = FALSE),
+      
+      ##if possible, it would be good to add an option to upload your own picture!
+      fileInput(inputId = 'files', 
+                label = 'Select an Image',
+                multiple = TRUE,
+                accept=c('image/png', 'image/jpeg')),
+      
+      h4(textOutput("testing"))),
+    mainPanel(
+      tableOutput('files'),
+      uiOutput('images'),
+    #OUTPUTS
+    #interesting outputs for our project: dataTableOutput(): an interactive table, imageOutput(), plotOutput(), textOutput()
+    imageOutput("result")
+    ))
 )
 
-#############################################
-
 # Set Working Directory# ###SET TO YOUR  OWN GITHUB DIRECTORY!!!###
-#setwd("C:\\Users\\beyka\\Desktop\\MAA projects\\DA-Project\\DA-project\\SHINY")
+setwd("C:\\Users\\-Andris\\Documents\\GitHub\\DA-project\\SHINY")
 
 
 # (Install jpeg library previously)
@@ -93,20 +101,34 @@ library(jpeg)
 #############################################
 #assemble your input values into output values:
 
-server <- function(input, output) {
-
-if (input$image == "monalisa") then { 	original = readJPEG("LisbonInput.jpg")}
-if (input$image == "lisbon") then { 	original = readJPEG("MonaLisaInput.jpg")}
-
-# Do the same process separatly for each channel
-	R=original[,,1]
-	G=original[,,2]
-	B=original[,,3]
+server <- function(input, output, session) {
 
 
 #output function depends on the input
 #render function makes the output
-	output$result <- renderImage({ 
+
+#just for testing the variable, can be deleted in the end
+output$testing <- renderText(input$CorCov)
+  
+output$result <- renderImage({ 
+#Radio button decides which input to load
+var <-switch(input$image,
+           "lisbon" = "LisbonInput.jpg",
+           "monalisa" = "MonaLisaInput.jpg",
+           "asd.jpg"
+    )
+# loading picture
+original=readJPEG(var)
+
+
+#Updating the maximum number of PCas to use
+updateSliderInput(session, "numPCs", max =dim(original)[2])
+
+# Do the same process separatly for each channel
+R=original[,,1]
+G=original[,,2]
+B=original[,,3]
+
 
 # Compute a correlation or covariance matrix
 # and its eigen vectors
@@ -115,22 +137,33 @@ if (input$image == "lisbon") then { 	original = readJPEG("MonaLisaInput.jpg")}
 		k = input$numPCs
 
 ### Red
-		r=cov(R)
+		r <-switch(input$CorCov,
+		             "cor" = cor(R),
+		             "cov" = cov(R)
+		)
+		#r=cov(R)
 		#r=cor(R)
 		g=eigen(r)
 		Rv=g$vectors[,1:k]
 
 
 ###Green
-		#if (input$CorCov == "cor") 
-		r=cov(G)
+		r <-switch(input$CorCov,
+		           "cor" = cor(G),
+		           "cov" = cov(G)
+		)
+		#r=cov(G)
 		#r=cor(G)}
 		g=eigen(r)
 		Gv=g$vectors[,1:k]
 
 
 ###Blue
-		r=cov(B)
+		r <-switch(input$CorCov,
+		           "cor" = cor(B),
+		           "cov" = cov(B)
+		)
+		#r=cov(B)
 		#r=cor(B)}
 		g=eigen(r)
 		Bv=g$vectors[,1:k]
@@ -154,7 +187,57 @@ if (input$image == "lisbon") then { 	original = readJPEG("MonaLisaInput.jpg")}
 			contentType = "image/jpeg",
 			alt = "This is alternate text") #I dont know yet what this does but might be useful later
 	})
+
+
+
+output$files <- renderTable(input$files)
+
+files <- reactive({
+  files <- input$files
+  files$datapath <- gsub("\\\\", "/", files$datapath)
+  files
+})
+
+
+output$images <- renderUI({
+  if(is.null(input$files)) return(NULL)
+  image_output_list <- 
+    lapply(1:nrow(files()),
+           function(i)
+           {
+             imagename = paste0("image", i)
+             imageOutput(imagename)
+           })
+  
+  do.call(tagList, image_output_list)
+})
+
+observe({
+  if(is.null(input$files)) return(NULL)
+  for (i in 1:nrow(files()))
+  {
+    print(i)
+    local({
+      my_i <- i
+      imagename = paste0("image", my_i)
+      print(imagename)
+      output[[imagename]] <- 
+        renderImage({
+          list(src = files()$datapath[my_i],
+               alt = "Image failed to render")
+        }, deleteFile = FALSE)
+    })
+  }
+})
+
+
+
+
 }
+
+
+
+
 
 shinyApp(ui = ui, server = server)
 
