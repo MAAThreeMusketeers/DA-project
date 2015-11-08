@@ -113,8 +113,8 @@ output$testing <- renderText(input$CorCov)
 output$result <- renderImage({ 
 #Radio button decides which input to load
 var <-switch(input$image,
-           "lisbon" = "LisbonInput.jpg",
-           "monalisa" = "MonaLisaInput.jpg",
+           "lisbon" = "pics/LisbonInput.jpg",
+           "monalisa" = "pics/MonaLisaInput.jpg",
            "asd.jpg"
     )
 # loading picture
