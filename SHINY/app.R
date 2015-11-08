@@ -33,6 +33,9 @@
 ############
 library(shiny)
 
+# Set Working Directory# ###SET TO YOUR  OWN GITHUB DIRECTORY!!!###
+setwd("C:\\Users\\-Andris\\Documents\\GitHub\\DA-project\\SHINY")
+
 ############################################
 #what the app will actually do:
 
@@ -58,7 +61,7 @@ ui <- fluidPage(
       selectInput(
         "image",
         label = "Choose image",
-        choices = c("Lisbon" = "lisbon", "Mona Lisa" = "monalisa"),
+        choices = c("Lisbon" = "lisbon", "Mona Lisa" = "monalisa", "User Input" = "user"),
         multiple = FALSE),
       
       #a select list to choose between correlation and covariance
@@ -69,10 +72,10 @@ ui <- fluidPage(
       multiple = FALSE),
       
       ##if possible, it would be good to add an option to upload your own picture!
-      fileInput(inputId = 'files', 
+      fileInput("upload", 
                 label = 'Select an Image',
-                multiple = TRUE,
-                accept=c('image/png', 'image/jpeg')),
+                multiple = FALSE,
+                accept=c('image/jpeg')),
       
       h4(textOutput("testing"))),
     mainPanel(
@@ -83,9 +86,6 @@ ui <- fluidPage(
     imageOutput("result")
     ))
 )
-
-# Set Working Directory# ###SET TO YOUR  OWN GITHUB DIRECTORY!!!###
-setwd("C:\\Users\\-Andris\\Documents\\GitHub\\DA-project\\SHINY")
 
 
 # (Install jpeg library previously)
@@ -102,27 +102,63 @@ library(jpeg)
 #assemble your input values into output values:
 
 server <- function(input, output, session) {
-
+# set file limit to 5mb
+  options(shiny.maxRequestSize = 5*1024^2)
+  
+#copy the file into the pic's folder, save as user.jpg
+#currently this is hard coded, we could make it dynamic if we define a list for choices, add in this observe,
+#we add the new filename etc. Plus for the var<- switch, we need a list too
+  observe({
+    if (is.null(input$upload)) return()
+    file.remove(paste(getwd(),"pics","UserInput.jpg", sep="/"))
+    file.copy(input$upload$datapath, paste(getwd(),"pics","UserInput.jpg", sep="/"))
+  })
 
 #output function depends on the input
 #render function makes the output
 
 #just for testing the variable, can be deleted in the end
-output$testing <- renderText(input$CorCov)
+#writing location
+
   
+  
+output$testing <- renderPrint(input$files[4])
+
 output$result <- renderImage({ 
-#Radio button decides which input to load
+#Dropdown menu decides which input to load
+
+  
+#Reads the filenames into a variable
+picfiles<- grep('.jpg', list.files(path = paste(getwd(),"pics", sep="/")), value=TRUE)
+
+#Rtrail - eliminating .jpg
+picnames<-gsub(".jpg", "", picfiles)
+
+#Creating named list for the dropdown menu
+ls_choices.list <- as.list(picfiles) 
+names(ls_choices.list) <- picnames
+ls_choices.list
+#Updateing the dropdown list with the created named list - not working yet
+### !!problem is the condition, that's not following the values - links yet !!###
+#updateSelectInput(session, "image", choices = ls_choices.list)
+
+# Change values for input$inSelect
+
 var <-switch(input$image,
            "lisbon" = "pics/LisbonInput.jpg",
            "monalisa" = "pics/MonaLisaInput.jpg",
-           "asd.jpg"
-    )
+           "user" = "pics/UserInput.jpg"
+)
 # loading picture
 original=readJPEG(var)
 
 
 #Updating the maximum number of PCas to use
 updateSliderInput(session, "numPCs", max =dim(original)[2])
+
+#output$testing <- renderDataTable(picnames)
+
+
 
 # Do the same process separatly for each channel
 R=original[,,1]
@@ -192,11 +228,6 @@ B=original[,,3]
 
 output$files <- renderTable(input$files)
 
-files <- reactive({
-  files <- input$files
-  files$datapath <- gsub("\\\\", "/", files$datapath)
-  files
-})
 
 
 output$images <- renderUI({
