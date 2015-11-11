@@ -1,30 +1,7 @@
 ############################################################
-#	IMPLEMENTING PROJECT IN SHINY				     #
-#	last: bea, 20151106					     #
+#	IMPLEMENTING PROJECT IN SHINY				                     #
+#	last: bea, 20151110                       					     #
 ############################################################
-
-#observations: 
-#1
-#if we use pictures with a lot of blank space 
-#(say whole "rows" or "columns" empty, the app gives error "infinite or missing values, standard deviation is zero")
-
-#2
-#Carolina maybe??
-#we should check the max possible PCs (number of "variables") and use that as the maximum on the slider, would be great! (you can get to the original picture!)
-
-############
-#tutorial used to create this App: http://shiny.rstudio.com/tutorial/
-
-############
-#note: there is a computer maintaining the shiny app in the background and it our case right now it is
-#YOUR computer and it uses an R session and now it is YOUR session, so your R is busy
-#with maintaining the app. If you want to do something else (run the sample code in this file),
-#you have to close the app by clicking the STOP button (kill the app). then you can run the code
-
-############
-#you can do this later, it is for putting the App online, I have done it and runs fine (but takes quite some time)
-
-#create an account on shinyapps.io and follow their instructions!! 
 
 #-------------------IMPORTANT------------------#
 #after finishing the project we will deploy it again:
@@ -37,26 +14,22 @@ library(shiny)
 setwd("C:\\Users\\-Andris\\Documents\\GitHub\\DA-project\\SHINY")
 
 ############################################
-#what the app will actually do:
 
 ui <- fluidPage(
   
-  titlePanel("Image reconstruction with PCA"),
+  titlePanel("Image reconstruction with Principal Component Analysis"),
   
-  #INPUTS
-  #interesting inputs for our project to be discovered: fileInput(to upload your own pic), selectInput: for choosing pic)(
+  
   sidebarLayout(
+###
+#INPUTS
     sidebarPanel( 
       #a slider to choose number of principal components
       sliderInput(
         inputId = "numPCs", 
         label = "Choose number of PCs", 
-        value = 40, min = 1, max = 100), #here we should have MAX set to the number of possible PCs of each specific picture (should read it each time)
-      #it is maximized down, in the server side
-      
-      ###THIS DOES NOT WORK YET, TO BE ADJUSTED!###
-      
-      #this does not generate error but apparently does not work yet:
+        value = 40, min = 1, max = 100), #MAX updated later
+  
       #a select list to choose a pic
       selectInput(
         "image",
@@ -71,35 +44,43 @@ ui <- fluidPage(
       choices = c("Correlation" = "cor", "Covariance" = "cov"),
       multiple = FALSE),
       
-      ##if possible, it would be good to add an option to upload your own picture!
+      #a select list to choose whether to see theory for R, G or B
+      selectInput(
+        "RGB",
+        label = "Choose the component of RGB you want to see a theoretical 
+                explication for",
+        choices = c("Red" = "r", "Green" = "g", "Blue" = "b"),
+        multiple = FALSE),
+      
+      #upload user's picture
       fileInput("upload", 
                 label = 'Select an Image',
                 multiple = FALSE,
                 accept=c('image/jpeg')),
       
       h4(textOutput("testing"))),
+
+###    
+    
+#OUTPUTS
     mainPanel(
       tableOutput('files'),
       uiOutput('images'),
-    #OUTPUTS
-    #interesting outputs for our project: dataTableOutput(): an interactive table, imageOutput(), plotOutput(), textOutput()
-    imageOutput("result")
+      imageOutput("result")
+      #tableOutput("table_exp")
+      #plotOutput("screeplot")
+      #tableOutput("loadings"),
+      #plotOutput("PC12plot")
     ))
 )
 
-
-# (Install jpeg library previously)
-# Load library and read the file
-
-# TIP: if the readJPEG does not work for you maybe your file is stored as .jpg, even though it is a jpeg. you can check it with this command:
-# file.info(list.files(getwd(),full.names=TRUE))
-
-
+###
+# install and load library 
+install.packages(c("jpeg"))
 library(jpeg)
 
 
-#############################################
-#assemble your input values into output values:
+############################################
 
 server <- function(input, output, session) {
 # set file limit to 5mb
@@ -114,13 +95,9 @@ server <- function(input, output, session) {
     file.copy(input$upload$datapath, paste(getwd(),"pics","UserInput.jpg", sep="/"))
   })
 
-#output function depends on the input
-#render function makes the output
 
 #just for testing the variable, can be deleted in the end
 #writing location
-
-  
   
 output$testing <- renderPrint(input$files[4])
 
@@ -152,7 +129,6 @@ var <-switch(input$image,
 # loading picture
 original=readJPEG(var)
 
-
 #Updating the maximum number of PCas to use
 updateSliderInput(session, "numPCs", max =dim(original)[2])
 
@@ -177,8 +153,6 @@ B=original[,,3]
 		             "cor" = cor(R),
 		             "cov" = cov(R)
 		)
-		#r=cov(R)
-		#r=cor(R)
 		g=eigen(r)
 		Rv=g$vectors[,1:k]
 
@@ -188,8 +162,6 @@ B=original[,,3]
 		           "cor" = cor(G),
 		           "cov" = cov(G)
 		)
-		#r=cov(G)
-		#r=cor(G)}
 		g=eigen(r)
 		Gv=g$vectors[,1:k]
 
@@ -199,13 +171,86 @@ B=original[,,3]
 		           "cor" = cor(B),
 		           "cov" = cov(B)
 		)
-		#r=cov(B)
-		#r=cor(B)}
 		g=eigen(r)
 		Bv=g$vectors[,1:k]
 
+###########################
+#output theory for R,G or B
+  A <- switch(input$RGB,
+              "r" = R,
+              "g" = G,
+              "b" = B)
+		
+  g <- switch(input$CorCov,
+              "cor" = eigen(cor(A)),
+              "cov" = eigen(cov(A)))
+  
+  #perentage of total variation explained by the components
+  perc_exp<-g$values/NCOL(A)
+  
+  cum_exp<-c(perc_exp[1], sum(perc_exp[1:2]), sum(perc_exp[1:3]), 
+             sum(perc_exp[1:4]),sum(perc_exp[1:5]),sum(perc_exp[1:6]),
+             sum(perc_exp[1:7]),sum(perc_exp[1:8]),sum(perc_exp[1:9]),
+             sum(perc_exp[1:10]),sum(perc_exp[1:11]),sum(perc_exp[1:12]),
+             sum(perc_exp[1:13]),sum(perc_exp[1:14]),sum(perc_exp[1:15]))
+  
+  table_exp<-cbind(values=g$values[1:15], variance_explained=perc_exp[1:15], 
+                   cummulated_variance_explained=cum_exp)
+  
+  #output for the app:
+  output$table_exp <- renderTable({
+    table_exp
+  })
+ 
+  
+  ############
+  #screeplot to see the elbow
+  
+  #output for the app:
+  output$screeplot <- renderPlot({
+    plot(g$values, type='b')
+  })
 
-#a temp file to save the output.
+  
+  ############
+  #by Kaiser criterion, the number of Principal Components that should be considered
+  #factors with eigenvalues greater than 1
+  
+  #output for the app:
+  sum(table_exp[,1] > 1)
+  
+  ############
+  #by Person criterion (!!I have not found this anywhere but in my notes!!), 
+  #accept PC until when cumulated variance explained is above 0.8, included
+  
+  #output for the app:
+  sum(table_exp[,3] <= 0.8)+1
+  
+  ############
+  #15 rows, 10 columns, just a sample...explain this in the text!
+  A.std<-scale(A, center=TRUE, scale=TRUE)
+  scores<-A.std%*%g$vectors
+  
+  #15 rows, 10 columns, just a sample...explain this in the text!
+  loadings<-cor(scores, A.std)
+  
+  #output for the app:
+  output$loadings <- renderTable({
+  loadings[1:15,1:10]
+  })
+    
+  ############
+  #scatterplot of the scores PC1 versus PC2
+  
+  #output for the app:
+  output$PC12plot <- renderPlot({
+  plot(scores[,1:2])
+  abline(h=0); abline(v=0)
+  })
+  
+########################################  
+		
+#a temp file to save the output
 		outfile <- tempfile(fileext = ".jpg")
 
 # just an easy way to initialize it to a 3D matrix of the correct size
@@ -261,14 +306,7 @@ observe({
   }
 })
 
-
-
-
 }
-
-
-
-
 
 shinyApp(ui = ui, server = server)
 
