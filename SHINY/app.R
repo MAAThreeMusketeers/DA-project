@@ -64,14 +64,37 @@ ui <- fluidPage(
     
 #OUTPUTS
     mainPanel(
-      tableOutput('files'),
-      uiOutput('images'),
-      imageOutput("result")
-      #tableOutput("table_exp")
-      #plotOutput("screeplot")
+      tabsetPanel(
+        tabPanel("Image decomposition", imageOutput("result"),
+                 "The above picture..... BULLLSSSSS"), 
+        tabPanel("Screeplot", plotOutput("screeplot"), "The scree plot is a useful visual aid for determining an 
+                 appropriate number of principal components. The scree plot graphs the eigenvalue against the 
+                 component number. To determine the appropriate number of components, we look for an elbow
+                 in the scree plot. The component number is taken to be the point at which the remaining eigenvalues
+                 are relatively small and all about the same size."),
+        tabPanel("Loadings", tableOutput("loadings"),"
+                 The Loading Plot is a plot of the relationship between original variables and subspace dimensions. PC loadings measure the importance of each variable in accounting for the
+                  variability in the PC. It is possible to interpret the first few PCs in terms of 'overall' effect or a 'contrast' between groups of variables based on the
+                 structures of PC loadings. 
+                 "),
+        tabPanel("PC12plot", plotOutput("PC12plot"), "BiPlot:
+                  The bi-plot shows both the loadings and the scores for two selected components in parallel. Bi-plot display is a visualization technique for investigating
+                  the inter-relationships between the observations and
+                  variables in multivariate data. In PCA, relationships between PC scores and PCA loadings
+                  associated with any two PCs can be illustrated in a bi-plot
+                  display. 
+                  ")
+      
+        
+      #tableOutput('files'),
+      #uiOutput('images'),
+      #imageOutput("result"),
+      #tableOutput("table_exp"),
+      #plotOutput("screeplot"),
       #tableOutput("loadings"),
       #plotOutput("PC12plot")
     ))
+  )
 )
 
 ###
@@ -96,10 +119,7 @@ server <- function(input, output, session) {
   })
 
 
-#just for testing the variable, can be deleted in the end
-#writing location
-  
-output$testing <- renderPrint(input$files[4])
+
 
 output$result <- renderImage({ 
 #Dropdown menu decides which input to load
@@ -203,13 +223,27 @@ B=original[,,3]
   })
  
   
+  #just for testing the variable, can be deleted in the end
+  #writing location
+  
+  output$testing <- renderPlot({
+    plot(g$values, type='b')
+    })
+  
   ############
   #screeplot to see the elbow
   
   #output for the app:
-  output$screeplot <- renderPlot({
-    plot(g$values, type='b')
-  })
+  lambda=g$values
+  
+  output$screeplot <- renderPlot(
+    plot(y=lambda,
+         x=1:length(lambda),
+         log="x",
+         type="b",
+         las=1,ylab="Eigenvalues",xlab="Index (log scale)")
+    
+  )
 
   
   ############
@@ -271,40 +305,8 @@ B=original[,,3]
 
 
 
-output$files <- renderTable(input$files)
+#output$files <- renderTable(input$files)
 
-
-
-output$images <- renderUI({
-  if(is.null(input$files)) return(NULL)
-  image_output_list <- 
-    lapply(1:nrow(files()),
-           function(i)
-           {
-             imagename = paste0("image", i)
-             imageOutput(imagename)
-           })
-  
-  do.call(tagList, image_output_list)
-})
-
-observe({
-  if(is.null(input$files)) return(NULL)
-  for (i in 1:nrow(files()))
-  {
-    print(i)
-    local({
-      my_i <- i
-      imagename = paste0("image", my_i)
-      print(imagename)
-      output[[imagename]] <- 
-        renderImage({
-          list(src = files()$datapath[my_i],
-               alt = "Image failed to render")
-        }, deleteFile = FALSE)
-    })
-  }
-})
 
 }
 

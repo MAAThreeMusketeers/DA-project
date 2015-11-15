@@ -1,12 +1,12 @@
 # Set Working Directory
-setwd("C:/Users/Carolina/Desktop")
+setwd("C:/Users/-Andris/Documents/GitHub/DA-project/SHINY/pics")
 
 
 # (Install jpeg library previously)
 # Load library and read the file
 
 library(jpeg)
-original = readJPEG("monalisa.jpeg")
+original = readJPEG("MonaLisaInput.jpg")
 
 
 # The image is viewed as a 3D array of dimensions:
