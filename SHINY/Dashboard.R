@@ -6,17 +6,19 @@
 
 #-------------------IMPORTANT------------------#
 #after finishing the project we will deploy it again:
-#shinyapps::deployApp('C:/Users/beyka/Desktop/MAA projects/DA-Project/DA-project/SHINY')
+shinyapps::deployApp('C:/Users/beyka/Desktop/MAA projects/DA-Project/DA-project/SHINY')
 
 ############################################
 ## app.R ##
 library(shiny)
+#install.packages("shinydashboard")
+
 library(shinydashboard)
 library(jpeg)
 
 # Set Working Directory# ###SET TO YOUR  OWN GITHUB DIRECTORY!!!###
 #setwd("C:\\Users\\-Andris\\Documents\\GitHub\\DA-project\\SHINY")
-
+setwd("C:\\Users\\closer\\Documents\\Projecto\\DA-project\\SHINY")
 
 ui <- dashboardPage(
 ##### HEADER #####
@@ -27,10 +29,15 @@ dashboardHeader(title = "Image reconstruction with Principal Component Analysis"
       menuItem("Picture decomposition", tabName = "home", badgeLabel = "pic", badgeColor ="maroon",icon = icon("line-chart")),
       menuItem("Scree plot", tabName = "scree", badgeLabel = "1. step", badgeColor ="green",icon = icon("line-chart")),
       menuItem("Loadings", tabName = "loadings", badgeLabel = "2. step", badgeColor ="green", icon = icon("th")),
-      menuItem("BiPlot", tabName = "biplot", badgeLabel = "3. step", badgeColor ="green", icon = icon("anchor"))),
-    menuItem("Choose image",icon = icon("picture", lib = "glyphicon"),
+      menuItem("BiPlot", tabName = "biplot", badgeLabel = "3. step", badgeColor ="green", icon = icon("anchor")),
+      menuItem("Choose image",icon = icon("picture", lib = "glyphicon"),
              selectInput("image",label = "Choose image",
-                         choices = c("Lisbon" = "lisbon", "Mona Lisa" = "monalisa", "User Input" = "user"))),
+                         choices = c("Lisbon" = "lisbon", "Lisbon destroyed" = "lisbondes", "Mona Lisa destroyed" = "monalisades", "Mona Lisa" = "monalisa", "User Input" = "user"))),
+    menuItem("Upload your own picture",icon = icon("cloud-upload", lib = "glyphicon"),
+             fileInput("upload", 
+                       label = 'Select an Image',
+                       multiple = FALSE,
+                       accept=c('image/jpeg'))),
     menuItem("Choose correlation or covariance",icon = icon("cog", lib = "glyphicon"),
              selectInput("CorCov",label = "Choose correlation or covariance",
                choices = c("Correlation" = "cor", "Covariance" = "cov"),
@@ -39,14 +46,9 @@ dashboardHeader(title = "Image reconstruction with Principal Component Analysis"
              selectInput("RGB",label = "Choose the component of RGB you want to see a theoretical 
                 explication for",
                choices = c("Red" = "r", "Green" = "g", "Blue" = "b"),
-               multiple = FALSE)),
-    menuItem("Upload your own picture",icon = icon("cloud-upload", lib = "glyphicon"),
-             fileInput("upload", 
-                       label = 'Select an Image',
-                       multiple = FALSE,
-                       accept=c('image/jpeg')))
+               multiple = FALSE))
     
-    
+    )    
     
 ),
   dashboardBody(
@@ -157,10 +159,73 @@ server <- function(input, output, session) {
     var <-switch(input$image,
                  "lisbon" = "pics/LisbonInput.jpg",
                  "monalisa" = "pics/MonaLisaInput.jpg",
+                 "lisbondes" = "pics/LisbonInputDes.jpg",
+                 "monalisades" = "pics/MonaLisaInputDes.jpg",
                  "user" = "pics/UserInput.jpg"
     )
     # loading picture
     original=readJPEG(var)
+    
+    
+    ##################################################
+    # "MISSING" DATA CHALLENGE
+    ##################################################
+    
+    originalGOOD=readJPEG(var)
+    
+#    if (var="pics/LisbonInputDes.jpg"){
+#      originalGOOD=readJPEG("pics/LisbonInput.jpg")
+#    }
+    
+    if (var=="pics/MonaLisaInputDes.jpg"){
+      originalGOOD=readJPEG("pics/MonaLisaInput.jpg")
+    }
+    
+    for (d in 1:3){
+      for (i in 1:nrow(originalGOOD)){
+        for (j in 1:ncol(originalGOOD)){
+          if(abs(originalGOOD[i, j, d] - original[i,j, d]) > 0.1){
+            original[i,j, d] <- NA
+          }
+        }
+      }  
+    }
+    
+    
+    R=original[,,1]
+    G=original[,,2]
+    B=original[,,3]
+    
+    
+    
+    library(mice)
+    
+    #treating missing values R
+    if(sum(is.na(R))>0) {
+      imp <- mice(R, m=1, maxit=1, printFlag=TRUE)
+      Datimp <- complete(imp, "long", include=TRUE)  
+      R <- sapply(Datimp[145:288, 3:120], as.numeric)
+    }
+    
+    #treating missing values G
+    if(sum(is.na(G))>0) {
+      imp <- mice(G, m=1, maxit=1, printFlag=TRUE)
+      Datimp <- complete(imp, "long", include=TRUE)  
+      G <- sapply(Datimp[145:288, 3:120], as.numeric)
+    }
+    
+    #treating missing values B
+    if(sum(is.na(B))>0) {
+      imp <- mice(B, m=1, maxit=1, printFlag=TRUE)
+      Datimp <- complete(imp, "long", include=TRUE)  
+      B <- sapply(Datimp[145:288, 3:120], as.numeric)
+    }
+    
+    
+    ##################################################
+    #end of "MISSING" DATA CHALLENGE
+    ##################################################
+    
     
     #Updating the maximum number of PCas to use
     updateSliderInput(session, "numPCs", max =dim(original)[2])
@@ -170,9 +235,9 @@ server <- function(input, output, session) {
     
     
     # Do the same process separatly for each channel
-    R=original[,,1]
-    G=original[,,2]
-    B=original[,,3]
+    #R=original[,,1]
+    #G=original[,,2]
+    #B=original[,,3]
     
     
     # Compute a correlation or covariance matrix
