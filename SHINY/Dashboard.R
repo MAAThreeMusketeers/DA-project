@@ -17,7 +17,7 @@ library(shinydashboard)
 library(jpeg)
 
 # Set Working Directory# ###SET TO YOUR  OWN GITHUB DIRECTORY!!!###
-#setwd("C:\\Users\\-Andris\\Documents\\GitHub\\DA-project\\SHINY")
+setwd("C:\\Users\\-Andris\\Documents\\GitHub\\DA-project\\SHINY")
 #setwd("C:\\Users\\closer\\Documents\\Projecto\\DA-project\\SHINY")
 
 ui <- dashboardPage(
@@ -30,9 +30,15 @@ dashboardHeader(title = "Image reconstruction with Principal Component Analysis"
       menuItem("Scree plot", tabName = "scree", badgeLabel = "1. step", badgeColor ="green",icon = icon("line-chart")),
       menuItem("Loadings", tabName = "loadings", badgeLabel = "2. step", badgeColor ="green", icon = icon("th")),
       menuItem("BiPlot", tabName = "biplot", badgeLabel = "3. step", badgeColor ="green", icon = icon("anchor")),
+      menuItem("Explained Variance", tabName = "tableExplained", badgeLabel = "", badgeColor ="green", icon = icon("anchor")),
       menuItem("Choose image",icon = icon("picture", lib = "glyphicon"),
              selectInput("image",label = "Choose image",
                          choices = c("Lisbon" = "lisbon", "Mona Lisa" = "monalisa", "User Input" = "user"))),
+      menuItem("Choose number of PCs",icon=icon("arrows-h"),
+          sliderInput(
+            inputId = "numPCs", 
+            label = "Choose number of PCs", 
+            value = 40, min = 1, max = 100)),
     menuItem("Upload your own picture",icon = icon("cloud-upload", lib = "glyphicon"),
              fileInput("upload", 
                        label = 'Select an Image',
@@ -56,14 +62,9 @@ dashboardHeader(title = "Image reconstruction with Principal Component Analysis"
       tabItem(tabName = "home",
               # Boxes need to be put in a row (or column)
               fluidRow(
-                box(title="Image decomposition", 
-                    imageOutput("result"), height = 800),
-                box(titla="Choose number of PCs",
-                    icon=icon("arrows-h"),
-                             sliderInput(
-                               inputId = "numPCs", 
-                               label = "Choose number of PCs", 
-                               value = 40, min = 1, max = 100)))
+                box(title="Image decomposition", width=12,solidHeader = TRUE, status = "primary",
+                    imageOutput("result"), height = 800)
+                )
               ),
       ##END OF TABITEM
       
@@ -73,7 +74,7 @@ dashboardHeader(title = "Image reconstruction with Principal Component Analysis"
       
           
       box(
-        title = "Scree plot",
+        title = "Scree plot",width=12,solidHeader = TRUE, status = "primary",
         plotOutput("screeplot"), "The scree plot is a useful visual aid for determining an 
                  appropriate number of principal components. The scree plot graphs the eigenvalue against the 
         component number. To determine the appropriate number of components, we look for an elbow
@@ -87,7 +88,7 @@ dashboardHeader(title = "Image reconstruction with Principal Component Analysis"
           # Boxes need to be put in a row (or column)
           fluidRow(
             box(
-              title = "Loadings",
+              title = "Loadings",width=12,solidHeader = TRUE, status = "primary",
               tableOutput("loadings"),"
                  The Loading Plot is a plot of the relationship between original variables and subspace dimensions. PC loadings measure the importance of each variable in accounting for the
                   variability in the PC. It is possible to interpret the first few PCs in terms of 'overall' effect or a 'contrast' between groups of variables based on the
@@ -102,7 +103,7 @@ dashboardHeader(title = "Image reconstruction with Principal Component Analysis"
             
             
             box(
-              title = "Bi-Plot",
+              title = "Bi-Plot",width=12,solidHeader = TRUE, status = "primary",
               plotOutput("PC12plot"), "BiPlot:
                   The bi-plot shows both the loadings and the scores for two selected components in parallel. Bi-plot display is a visualization technique for investigating
                   the inter-relationships between the observations and
@@ -111,6 +112,34 @@ dashboardHeader(title = "Image reconstruction with Principal Component Analysis"
                   display. "
             )
           )
+    
+  ),
+  ##END OF TABITEM
+  tabItem(tabName = "tableExplained",
+          # Boxes need to be put in a row (or column)
+          fluidRow(
+            
+            
+            box(
+              title = "Explained Variance",width=12,solidHeader = TRUE, status = "primary",
+              plotOutput("table_exp"), "Explained variance:
+                  BLA BLA BLA"
+            ),
+            fluidRow(
+            box(
+              title = "Kaiser Criteria",width=6,solidHeader = TRUE, status = "primary",
+              plotOutput("kaiser"), "Details:
+                  According to Kaiser, the table shows those component(s) which eigenvalue(s) is/are greater than 1. It
+                  therefore explains more variance than a single variable. This corresponds to Kaiser's Criteria "
+            ),
+            box(
+              title = "Pearson Criteria",width=6,solidHeader = TRUE, status = "primary",
+              plotOutput("pearson"), "Details:
+                  Regarding the Pearson's criteria, those component(s) are listed whose 
+                  cumulated variance explained more than 80% of total variance."
+            ))
+          )
+          
   )
   ##END OF TABITEM
   
@@ -173,7 +202,7 @@ server <- function(input, output, session) {
     #Updating the maximum number of PCas to use
     updateSliderInput(session, "numPCs", max =dim(original)[2])
     
-    #output$testing <- renderDataTable(picnames)
+   
     
     
     
@@ -188,6 +217,8 @@ server <- function(input, output, session) {
     
     #Number of principal components to use:
     k = input$numPCs
+    
+    
     
     ### Red
     r <-switch(input$CorCov,
@@ -227,7 +258,7 @@ server <- function(input, output, session) {
                 "cov" = eigen(cov(A)))
     
     #perentage of total variation explained by the components
-    perc_exp<-g$values/NCOL(A)
+    perc_exp<-g$values/dim(original)[2]
     
     cum_exp<-c(perc_exp[1], sum(perc_exp[1:2]), sum(perc_exp[1:3]), 
                sum(perc_exp[1:4]),sum(perc_exp[1:5]),sum(perc_exp[1:6]),
@@ -239,7 +270,7 @@ server <- function(input, output, session) {
                      cummulated_variance_explained=cum_exp)
     
     #output for the app:
-    output$table_exp <- renderTable({
+    output$table_exp <- renderDataTable({
       table_exp
     })
     
@@ -250,7 +281,7 @@ server <- function(input, output, session) {
     output$testing <- renderPlot({
       plot(g$values, type='b')
     })
-    
+    #output$testing <- renderDataTable(perc_exp)
     ############
     #screeplot to see the elbow
     
@@ -272,15 +303,19 @@ server <- function(input, output, session) {
     #factors with eigenvalues greater than 1
     
     #output for the app:
-    sum(table_exp[,1] > 1)
-    
+    Kaiser <- sum(table_exp[,1] > 1)
+    output$kaiser <- renderDataTable({
+      Kaiser
+    })
     ############
     #by Person criterion (!!I have not found this anywhere but in my notes!!), 
     #accept PC until when cumulated variance explained is above 0.8, included
     
     #output for the app:
-    sum(table_exp[,3] <= 0.8)+1
-    
+    Pearson <- sum(table_exp[,3] <= 0.8)+1
+    output$pearson <- renderDataTable({
+      Pearson
+    })
     ############
     #15 rows, 10 columns, just a sample...explain this in the text!
     A.std<-scale(A, center=TRUE, scale=TRUE)

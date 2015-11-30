@@ -36,7 +36,7 @@ r=cor(gray)
 
 g=eigen(r)
 v=g$vectors
-
+ncol(g)
 
 # Do the scree plot (using log scale just to see it better)
 
@@ -56,7 +56,7 @@ writeJPEG(img,"original.jpeg")
 
 
 # Reconstruct the image with just k pcs
-k=7
+k=1
 v=g$vectors[,1:k]
 img=gray%*%v%*%t(v)
 name=paste(k,"PCs.jpeg")
@@ -69,3 +69,20 @@ img=gray%*%v%*%t(v)
 name=paste(k,"PC.jpeg")
 writeJPEG(img,name)
 
+rm(perc_exp)
+NROW(g)
+g
+dim(original)[2]
+head(g)
+perc_exp<-g$values/dim(original)[2]
+perc_exp
+cum_exp<-c(perc_exp[1], sum(perc_exp[1:2]), sum(perc_exp[1:3]), 
+           sum(perc_exp[1:4]),sum(perc_exp[1:5]),sum(perc_exp[1:6]),
+           sum(perc_exp[1:7]),sum(perc_exp[1:8]),sum(perc_exp[1:9]),
+           sum(perc_exp[1:10]),sum(perc_exp[1:11]),sum(perc_exp[1:12]),
+           sum(perc_exp[1:13]),sum(perc_exp[1:14]),sum(perc_exp[1:15]))
+
+table_exp<-cbind(values=g$values[1:15], variance_explained=perc_exp[1:15], 
+                 cummulated_variance_explained=cum_exp)
+table_exp
+Kaiser <- sum(table_exp[,1] > 1)
