@@ -1,3 +1,18 @@
+
+############################################################
+#	IMAGE RECONSTRUCTION WITH PRINCIPAL COMPONENTS ANALYSIS  #
+# Shiny dashboard                                          #
+############################################################ 
+#   Final Project                                          #
+#   Descriptive Analytics                                  #
+#   Fall semester 2015/2016                                #
+#   Master in Advanced Analytics                           #
+############################################################
+#   Carolina Almeida                                       #
+#   Beata Babiakova                                        #
+#   Andras Kolbert                                         #
+############################################################
+
 # Set Working Directory
 setwd("C:\\Users\\closer\\Documents\\Projecto\\DA-project\\MissingValuesTreatmentGray")
 
@@ -12,7 +27,6 @@ dim(original)
 ### Missing Values (inserted)
 
 #insert missing values (NA) 
-#(check http://www.r-bloggers.com/r-na-vs-null/)
 original[60:75, 60:65, 1:3] <- NA
 writeJPEG(original,"MonaLisaMissingValues.jpg")
 

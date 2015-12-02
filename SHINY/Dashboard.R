@@ -1,15 +1,24 @@
 
 ############################################################
-#	IMPLEMENTING PROJECT IN SHINY				                     #
-#	last: bea,   20151110                       					     #
+#	IMAGE RECONSTRUCTION WITH PRINCIPAL COMPONENTS ANALYSIS  #
+# Shiny dashboard                                          #
+############################################################ 
+#   Final Project                                          #
+#   Descriptive Analytics                                  #
+#   Fall semester 2015/2016                                #
+#   Master in Advanced Analytics                           #
+############################################################
+#   Carolina Almeida                                       #
+#   Beata Babiakova                                        #
+#   Andras Kolbert                                         #
 ############################################################
 
-#-------------------IMPORTANT------------------#
-#after finishing the project we will deploy it again:
-#shinyapps::deployApp('C:/Users/beyka/Desktop/MAA projects/DA-Project/DA-project/SHINY')
+#deploy the app
+#shinyapps::deployApp('C:/Users/closer/Documents/GitHub/DA-project/SHINY')
 
 ############################################
-## app.R ##
+##### SETTINGS #####
+
 library(shiny)
 #install.packages("shinydashboard")
 
@@ -17,237 +26,258 @@ library(shinydashboard)
 library(jpeg)
 
 # Set Working Directory# ###SET TO YOUR  OWN GITHUB DIRECTORY!!!###
-setwd("C:\\Users\\-Andris\\Documents\\GitHub\\DA-project\\SHINY")
-#setwd("C:\\Users\\closer\\Documents\\Projecto\\DA-project\\SHINY")
+#setwd("C:\\Users\\-Andris\\Documents\\GitHub\\DA-project\\SHINY")
+setwd("C:\\Users\\closer\\Documents\\GitHub\\DA-project\\SHINY")
+
+############################################
+##### USER INTERFACE #####
 
 ui <- dashboardPage(
+
 ##### HEADER #####
 dashboardHeader(title = "Image reconstruction with Principal Component Analysis"),
-  dashboardSidebar(
-    width = 300,
-    sidebarMenu(
-      menuItem("Picture decomposition", tabName = "home", badgeLabel = "pic", badgeColor ="maroon",icon = icon("line-chart")),
-      menuItem("Scree plot", tabName = "scree", badgeLabel = "1. step", badgeColor ="green",icon = icon("line-chart")),
-      menuItem("Loadings", tabName = "loadings", badgeLabel = "2. step", badgeColor ="green", icon = icon("th")),
-      menuItem("BiPlot", tabName = "biplot", badgeLabel = "3. step", badgeColor ="green", icon = icon("anchor")),
-      menuItem("Explained Variance", tabName = "tableExplained", badgeLabel = "", badgeColor ="green", icon = icon("anchor")),
-      menuItem("Choose image",icon = icon("picture", lib = "glyphicon"),
-             selectInput("image",label = "Choose image",
-                         choices = c("Lisbon" = "lisbon", "Mona Lisa" = "monalisa", "User Input" = "user"))),
-      menuItem("Choose number of PCs",icon=icon("arrows-h"),
-          sliderInput(
-            inputId = "numPCs", 
-            label = "Choose number of PCs", 
-            value = 40, min = 1, max = 100)),
-    menuItem("Upload your own picture",icon = icon("cloud-upload", lib = "glyphicon"),
-             fileInput("upload", 
-                       label = 'Select an Image',
-                       multiple = FALSE,
-                       accept=c('image/jpeg'))),
-    menuItem("Choose correlation or covariance",icon = icon("cog", lib = "glyphicon"),
-             selectInput("CorCov",label = "Choose correlation or covariance",
-               choices = c("Correlation" = "cor", "Covariance" = "cov"),
-               multiple = FALSE)),
-    menuItem("Choose Red Green or Blue",icon = icon("adjust", lib = "glyphicon"),
-             selectInput("RGB",label = "Choose the component of RGB you want to see a theoretical 
-                explication for",
-               choices = c("Red" = "r", "Green" = "g", "Blue" = "b"),
-               multiple = FALSE))
-    
-    )    
-    
-),
-  dashboardBody(
-    tabItems(
-      tabItem(tabName = "home",
-              # Boxes need to be put in a row (or column)
-              fluidRow(
-                box(title="Image decomposition", width=12,solidHeader = TRUE, status = "primary",
-                    imageOutput("result"), height = 800)
-                )
-              ),
-      ##END OF TABITEM
-      
-      tabItem(tabName = "scree",
-    # Boxes need to be put in a row (or column)
-    fluidRow(
-      
-          
-      box(
-        title = "Scree plot",width=12,solidHeader = TRUE, status = "primary",
-        plotOutput("screeplot"), "The scree plot is a useful visual aid for determining an 
-                 appropriate number of principal components. The scree plot graphs the eigenvalue against the 
-        component number. To determine the appropriate number of components, we look for an elbow
-        in the scree plot. The component number is taken to be the point at which the remaining eigenvalues
-        are relatively small and all about the same size."
-        )
-      )
-  ),
-  ##END OF TABITEM
-  tabItem(tabName = "loadings",
-          # Boxes need to be put in a row (or column)
-          fluidRow(
-            box(
-              title = "Loadings",width=12,solidHeader = TRUE, status = "primary",
-              tableOutput("loadings"),"
-                 The Loading Plot is a plot of the relationship between original variables and subspace dimensions. PC loadings measure the importance of each variable in accounting for the
-                  variability in the PC. It is possible to interpret the first few PCs in terms of 'overall' effect or a 'contrast' between groups of variables based on the
-                 structures of PC loadings."
-            )
-            )
-            ),
-  ##END OF TABITEM
-  tabItem(tabName = "biplot",
-          # Boxes need to be put in a row (or column)
-          fluidRow(
-            
-            
-            box(
-              title = "Bi-Plot",width=12,solidHeader = TRUE, status = "primary",
-              plotOutput("PC12plot"), "BiPlot:
-                  The bi-plot shows both the loadings and the scores for two selected components in parallel. Bi-plot display is a visualization technique for investigating
-                  the inter-relationships between the observations and
-                  variables in multivariate data. In PCA, relationships between PC scores and PCA loadings
-                  associated with any two PCs can be illustrated in a bi-plot
-                  display. "
-            )
-          )
-    
-  ),
-  ##END OF TABITEM
-  tabItem(tabName = "tableExplained",
-          # Boxes need to be put in a row (or column)
-          fluidRow(
-            
-            
-            box(
-              title = "Explained Variance",width=12,solidHeader = TRUE, status = "primary",
-              plotOutput("table_exp"), "Explained variance:
-                  BLA BLA BLA"
-            ),
+
+##### SIDEBAR #####
+dashboardSidebar(
+  width = 300,
+  sidebarMenu(
+      menuItem("Picture decomposition", 
+               tabName = "home", 
+               badgeLabel = "pic", 
+               badgeColor ="maroon",
+               icon = icon("line-chart")),
+      menuItem("Choose image",
+               icon = icon("picture", lib = "glyphicon"),
+               selectInput("image",
+                           label = "Choose image",
+                           choices = c("Lisbon" = "lisbon", 
+                                       "Mona Lisa" = "monalisa", 
+                                       "User Input" = "user"))),
+      menuItem("Choose number of PCs",
+               icon=icon("arrows-h"),
+               sliderInput(inputId = "numPCs", 
+                           label = "Choose number of PCs", 
+                           value = 1, min = 1, max = 100)),
+      menuItem("Upload your own picture",
+               icon = icon("cloud-upload", lib = "glyphicon"),
+               fileInput("upload", 
+                         label = 'Select an Image',
+                         multiple = FALSE,
+                         accept=c('image/jpeg'))),
+      menuItem("Choose correlation or covariance",
+               icon = icon("cog", lib = "glyphicon"),
+               selectInput("CorCov",
+                           label = "Choose correlation or covariance",
+                           choices = c("Correlation" = "cor", 
+                                       "Covariance" = "cov"),
+                           multiple = FALSE)),
+      menuItem("Choose Red Green or Blue",
+               icon = icon("adjust", lib = "glyphicon"),
+               selectInput("RGB",
+                           label = "Choose the component of RGB you want to see 
+                           a theoretical explanation for",
+                           choices = c("Red" = "r", 
+                                       "Green" = "g", 
+                                       "Blue" = "b"),
+                           multiple = FALSE)),
+      menuItem("Scree plot", 
+               tabName = "scree", 
+               badgeLabel = "1. step", 
+               badgeColor ="green",
+               icon = icon("line-chart")),
+      menuItem("Loadings", 
+               tabName = "loadings", 
+               badgeLabel = "2. step", 
+               badgeColor ="green", 
+               icon = icon("th")),
+      menuItem("BiPlot", 
+               tabName = "biplot", 
+               badgeLabel = "3. step", 
+               badgeColor ="green", 
+               icon = icon("anchor")),
+      menuItem("Explained Variance", 
+               tabName = "tableExplained", 
+               badgeLabel = "", 
+               badgeColor ="green", 
+               icon = icon("anchor"))
+  ) #end of sidebarMenu    
+), #end of dashboardSidebar
+
+##### BODY #####
+dashboardBody(
+  tabItems(
+    tabItem(tabName = "home",
+            # Boxes need to be put in a row (or column)
             fluidRow(
-            box(
-              title = "Kaiser Criteria",width=6,solidHeader = TRUE, status = "primary",
-              plotOutput("kaiser"), "Details:
-                  According to Kaiser, the table shows those component(s) which eigenvalue(s) is/are greater than 1. It
-                  therefore explains more variance than a single variable. This corresponds to Kaiser's Criteria "
-            ),
-            box(
-              title = "Pearson Criteria",width=6,solidHeader = TRUE, status = "primary",
-              plotOutput("pearson"), "Details:
-                  Regarding the Pearson's criteria, those component(s) are listed whose 
-                  cumulated variance explained more than 80% of total variance."
-            ))
-          )
-          
-  )
-  ##END OF TABITEM
-  
-)
-)
-)
+              box(title = "Image decomposition", 
+                  width = 12,
+                  solidHeader = TRUE, 
+                  status = "primary",
+                  imageOutput("result"), 
+                  height = 800)
+            )
+    ),
+    tabItem(tabName = "scree",
+           # Boxes need to be put in a row (or column)
+            fluidRow(
+              box(title = "Scree plot",
+                  width = 12,
+                  solidHeader = TRUE, 
+                  status = "primary",
+                  plotOutput("screeplot", click = "plot_click"), 
+                  verbatimTextOutput("info"),
+                  #plotOutput(point), #trying to get a red point...
+                  "The scree plot is a useful visual aid for determining an 
+                  appropriate number of principal components. The scree plot 
+                  graphs the eigenvalue against the component number. 
+                  To determine the appropriate number of components, we look for 
+                  an elbow in the scree plot. The component number is taken to 
+                  be the point at which the remaining eigenvalues are relatively 
+                  small and all about the same size.")
+            )
+    ),
+    tabItem(tabName = "loadings",
+            # Boxes need to be put in a row (or column)
+            fluidRow(
+              box(title = "Loadings",
+                  width = 12,
+                  solidHeader = TRUE, 
+                  status = "primary",
+                  tableOutput("loadings"),
+                  "The Loading Plot is a plot of the relationship between 
+                  original variables and subspace dimensions. PC loadings 
+                  measure the importance of each variable in accounting for the
+                  variability in the PC. It is possible to interpret the first 
+                  few PCs in terms of 'overall' effect or a 'contrast' between 
+                  groups of variables based on the structures of PC loadings.")
+            )
+    ),
+    tabItem(tabName = "biplot",
+            # Boxes need to be put in a row (or column)
+            fluidRow(
+              box(title = "Bi-Plot",
+                  width = 12,
+                  solidHeader = TRUE, 
+                  status = "primary",
+                  plotOutput("PC12plot"), 
+                  "BiPlot:
+                  The bi-plot shows both the loadings and the scores for two 
+                  selected components in parallel. Bi-plot display is a 
+                  visualization technique for investigating the inter-relationships 
+                  between the observations and variables in multivariate data. 
+                  In PCA, relationships between PC scores and PCA loadings 
+                  associated with any two PCs can be illustrated in a bi-plot 
+                  display.")
+            )
+    ),
+    tabItem(tabName = "tableExplained",
+            # Boxes need to be put in a row (or column)
+            fluidRow(
+              box(title = "Explained Variance",
+                  width = 12,
+                  solidHeader = TRUE, 
+                  status = "primary",
+                  tableOutput("table_exp"), 
+                  "Explained variance"),
+              fluidRow(
+                box(title = "Kaiser Criteria",
+                    width = 6,
+                    solidHeader = TRUE, 
+                    status = "primary",
+                    verbatimTextOutput("kaiser")),
+                box(title = "Pearson Criteria",
+                    width = 6,
+                    solidHeader = TRUE, 
+                    status = "primary",
+                    verbatimTextOutput("pearson"))
+              ) #end of inside ("criteria") fluidRow
+            ) #end of outside ("explained variance") fluidRow
+    ) #end of "tableExplained" tabItem 
+  ) #end of tabItems
+) #end of dashboard body
+) #end of dashboard page (ui)
 
 
 ############################################
+##### SERVER #####
+
 server <- function(input, output, session) {
-  # set file limit to 5mb
-  options(shiny.maxRequestSize = 5*1024^2)
+# set file limit to 5mb
+options(shiny.maxRequestSize = 5*1024^2)
   
-  #copy the file into the pic's folder, save as user.jpg
-  #currently this is hard coded, we could make it dynamic if we define a list for choices, add in this observe,
-  #we add the new filename etc. Plus for the var<- switch, we need a list too
-  observe({
-    if (is.null(input$upload)) return()
-    file.remove(paste(getwd(),"pics","UserInput.jpg", sep="/"))
-    file.copy(input$upload$datapath, paste(getwd(),"pics","UserInput.jpg", sep="/"))
-  })
+#copy the file into the pic's folder, save as user.jpg
+observe({
+  if (is.null(input$upload)) return()
+  file.remove(paste(getwd(),"pics","UserInput.jpg", sep="/"))
+  file.copy(input$upload$datapath, paste(getwd(),"pics","UserInput.jpg", sep="/"))
+})
   
+output$result <- renderImage({ 
+  #Dropdown menu decides which input to load
+
+  #Reads the filenames into a variable
+  picfiles <- grep('.jpg', list.files(path = paste(getwd(),"pics", sep="/")), 
+                   value=TRUE)
   
+  #Rtrail - eliminating .jpg
+  picnames <- gsub(".jpg", "", picfiles)
+    
+  #Creating named list for the dropdown menu
+  ls_choices.list <- as.list(picfiles) 
+  names(ls_choices.list) <- picnames
+  ls_choices.list
+    
+  #load to "var" the path to the user-chosen input image
+  var <-switch(input$image,
+              "lisbon" = "pics/LisbonInput.jpg",
+              "monalisa" = "pics/MonaLisaInput.jpg",
+              "user" = "pics/UserInput.jpg"
+        )
   
-  
-  output$result <- renderImage({ 
-    #Dropdown menu decides which input to load
+  # loading picture previously chosen
+  original=readJPEG(var)
     
+  #chosen picture into the form of a 3D matrix (each pixel has 3 values: RGB)
+  #(or, in other words, 3 matrices: 1 for each of the R, G and B component)  
+  R=original[,,1]
+  G=original[,,2]
+  B=original[,,3]
     
-    #Reads the filenames into a variable
-    picfiles<- grep('.jpg', list.files(path = paste(getwd(),"pics", sep="/")), value=TRUE)
+  #Updating the displayed maximum number of PCs to use
+  updateSliderInput(session, "numPCs", max =dim(original)[2])
     
-    #Rtrail - eliminating .jpg
-    picnames<-gsub(".jpg", "", picfiles)
+  #Number of principal components to use (coming from the input slider):
+  k = input$numPCs
     
-    #Creating named list for the dropdown menu
-    ls_choices.list <- as.list(picfiles) 
-    names(ls_choices.list) <- picnames
-    ls_choices.list
-    #Updateing the dropdown list with the created named list - not working yet
-    ### !!problem is the condition, that's not following the values - links yet !!###
-    #updateSelectInput(session, "image", choices = ls_choices.list)
-    
-    # Change values for input$inSelect
-    
-    var <-switch(input$image,
-                 "lisbon" = "pics/LisbonInput.jpg",
-                 "monalisa" = "pics/MonaLisaInput.jpg",
-                 "user" = "pics/UserInput.jpg"
-    )
-    # loading picture
-    original=readJPEG(var)
-    
-    
-    R=original[,,1]
-    G=original[,,2]
-    B=original[,,3]
-    
-    
-    #Updating the maximum number of PCas to use
-    updateSliderInput(session, "numPCs", max =dim(original)[2])
-    
-   
-    
-    
-    
-    # Do the same process separatly for each channel
-    #R=original[,,1]
-    #G=original[,,2]
-    #B=original[,,3]
-    
-    
-    # Compute a correlation or covariance matrix
-    # and its eigen vectors
-    
-    #Number of principal components to use:
-    k = input$numPCs
-    
-    
-    
-    ### Red
-    r <-switch(input$CorCov,
-               "cor" = cor(R),
-               "cov" = cov(R)
-    )
+  #Compute a correlation or covariance matrix and its eigen vectors 
+  #(for all R, G and B - to be used in further calculations)
+    #Red
+    r <- switch(input$CorCov,
+                "cor" = cor(R),
+                "cov" = cov(R)
+         )
     g=eigen(r)
     Rv=g$vectors[,1:k]
     
-    
-    ###Green
-    r <-switch(input$CorCov,
-               "cor" = cor(G),
-               "cov" = cov(G)
-    )
+    #Green
+    r <- switch(input$CorCov,
+                "cor" = cor(G),
+                 "cov" = cov(G)
+         )
     g=eigen(r)
     Gv=g$vectors[,1:k]
     
     
-    ###Blue
+    #Blue
     r <-switch(input$CorCov,
                "cor" = cor(B),
                "cov" = cov(B)
-    )
+        )
     g=eigen(r)
     Bv=g$vectors[,1:k]
     
-    ###########################
-    #output theory for R,G or B
+    
+    #output theory for R,G or B (1 of them, depending on the input)
     A <- switch(input$RGB,
                 "r" = R,
                 "g" = G,
@@ -257,71 +287,75 @@ server <- function(input, output, session) {
                 "cor" = eigen(cor(A)),
                 "cov" = eigen(cov(A)))
     
-    #perentage of total variation explained by the components
-    perc_exp<-g$values/dim(original)[2]
+    # -1- perentage of total variation explained by the components (first 15)
+    perc_exp<-g$values/ncol(A) #dim(original)[2]
     
     cum_exp<-c(perc_exp[1], sum(perc_exp[1:2]), sum(perc_exp[1:3]), 
                sum(perc_exp[1:4]),sum(perc_exp[1:5]),sum(perc_exp[1:6]),
                sum(perc_exp[1:7]),sum(perc_exp[1:8]),sum(perc_exp[1:9]),
                sum(perc_exp[1:10]),sum(perc_exp[1:11]),sum(perc_exp[1:12]),
-               sum(perc_exp[1:13]),sum(perc_exp[1:14]),sum(perc_exp[1:15]))
+               sum(perc_exp[1:13]),sum(perc_exp[1:14]),sum(perc_exp[1:15]),
+               sum(perc_exp[1:16]),sum(perc_exp[1:17]),sum(perc_exp[1:18]),
+               sum(perc_exp[1:19]),sum(perc_exp[1:20]))
     
-    table_exp<-cbind(values=g$values[1:15], variance_explained=perc_exp[1:15], 
+    table_exp<-cbind(values=g$values[1:20], variance_explained=perc_exp[1:20], 
                      cummulated_variance_explained=cum_exp)
     
     #output for the app:
-    output$table_exp <- renderDataTable({
+    output$table_exp <- renderTable({
       table_exp
     })
     
-    
-    #just for testing the variable, can be deleted in the end
-    #writing location
-    
-    output$testing <- renderPlot({
-      plot(g$values, type='b')
-    })
-    #output$testing <- renderDataTable(perc_exp)
-    ############
-    #screeplot to see the elbow
-    
-    #output for the app:
+    # -2- screeplot to see the elbow
     lambda=g$values
     
+    #output for the app:
     output$screeplot <- renderPlot(
       plot(y=lambda,
            x=1:length(lambda),
            log="x",
            type="b",
-           las=1,ylab="Eigenvalues",xlab="Index (log scale)")
-      
+           las=1,
+           ylab="Eigenvalues",
+           xlab="Index (log scale)")
     )
     
+    output$info <- renderText({
+                     paste0("Number of PCs chosen by scree plot: ", 
+                           round(input$plot_click$x))
+                   })
+    output$point <- renderPlot(
+      points(input$numPCs, lambda[input$numPCs], col="red", pch=19))
     
-    ############
-    #by Kaiser criterion, the number of Principal Components that should be considered
-    #factors with eigenvalues greater than 1
-    
-    #output for the app:
+    # -3- Kaiser criterion
+    #the number of Principal Components that should be considered: factors with 
+    #eigenvalues greater than 1
     Kaiser <- sum(table_exp[,1] > 1)
-    output$kaiser <- renderDataTable({
-      Kaiser
-    })
-    ############
-    #by Person criterion (!!I have not found this anywhere but in my notes!!), 
-    #accept PC until when cumulated variance explained is above 0.8, included
     
     #output for the app:
+    output$kaiser <- renderText({
+                       paste0("According to Kaiser, we should keep the principal components with eigenvalues greater than 1. In our case the number of principal components to keep by the Kaiser criterion is ",
+                             Kaiser,
+                             ".")
+                     })
+    
+    # -4- Pearson criterion
+    #accept PC until when cumulated variance explained is above 0.8, included
     Pearson <- sum(table_exp[,3] <= 0.8)+1
-    output$pearson <- renderDataTable({
-      Pearson
-    })
-    ############
-    #15 rows, 10 columns, just a sample...explain this in the text!
+    
+    #output for the app:
+    output$pearson <- renderText({
+                        paste0("Regarding the Pearson's criterion, we have enough principal components when the cumulative  variance explained by them is more than 80%. In this case the number of principal components to keep by Pearson criterion is ",
+                              Pearson,
+                              ".")
+                      })
+    
+    
+    # -5- loadings
+    #15 rows, 10 columns, just a sample!
     A.std<-scale(A, center=TRUE, scale=TRUE)
     scores<-A.std%*%g$vectors
     
-    #15 rows, 10 columns, just a sample...explain this in the text!
     loadings<-cor(scores, A.std)
     
     #output for the app:
@@ -329,21 +363,21 @@ server <- function(input, output, session) {
       loadings[1:15,1:10]
     })
     
-    ############
-    #scatterplot of the scores PC1 versus PC2
+    # -6- scatterplot of the scores PC1 versus PC2
     
     #output for the app:
     output$PC12plot <- renderPlot({
       plot(scores[,1:2])
-      abline(h=0); abline(v=0)
+      abline(h=0); 
+      abline(v=0)
     })
+    #end of output theory
     
-    ########################################  
     
     #a temp file to save the output
     outfile <- tempfile(fileext = ".jpg")
     
-    # just an easy way to initialize it to a 3D matrix of the correct size
+    #initialize to a 3D matrix of the correct size
     img=original 
     
     img[,,1]=R%*%Rv%*%t(Rv)
@@ -353,18 +387,11 @@ server <- function(input, output, session) {
     writeJPEG(img, target = outfile)
     
     #return a list containing information about the image
-    
     list(src = outfile,
-         contentType = "image/jpeg",
-         alt = "This is alternate text") #I dont know yet what this does but might be useful later
-  })
-  
-  
-  
-  #output$files <- renderTable(input$files)
-  
-  
-}
+         contentType = "image/jpeg") 
+    
+                }) #end of renderImage
+} #end of server
 
 shinyApp(ui = ui, server = server)
 
