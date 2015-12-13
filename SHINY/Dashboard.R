@@ -28,9 +28,9 @@ library(jpeg)
 
 
 # Set Working Directory# ###SET TO YOUR  OWN GITHUB DIRECTORY!!!###
-#setwd("C:\\Users\\-Andris\\Documents\\GitHub\\DA-project\\SHINY")
+setwd("C:\\Users\\-Andris\\Documents\\GitHub\\DA-project\\SHINY")
 #setwd("C:\\Users\\closer\\Documents\\GitHub\\DA-project\\SHINY")
-setwd("C:\\Users\\Carolina\\Documents\\GitHub\\DA-project\\SHINY")
+#setwd("C:\\Users\\Carolina\\Documents\\GitHub\\DA-project\\SHINY")
 
 
 ############################################
@@ -214,20 +214,36 @@ ui <- dashboardPage(
       tabItem(tabName = "About",
               # Boxes need to be put in a row (or column)
               fluidRow(
-                box(title = "About", 
-                    width = 12,
+                box(title = "About the project", 
+                    width = 8,
+                    height =550,
                     solidHeader = TRUE, 
                     status = "primary",
-                    "This app was developed by András Kolbert, Bea Babiak and Carolina Duarte, candidates of Master in Advanced Analytics at Information Management School, NOVA University of Lisbon, Portugal.",
-                    "It is the final project of the Descriptive Analytics course (professor Jorge Mendes). The purpose is to present image reconstruction with PCA as well as visually show and explain the PCA method.",
-                    p("Fall semester, December 2015."),
-                    p(" "),
-                    p("Find us at:"),
-                    p("https://www.linkedin.com/in/andraskolbert"),
-                    p("https://www.linkedin.com/in/beababiak"),
-                    p("https://pt.linkedin.com/in/carolina-duarte-10a424b9")
-                    
-                )
+                    p(HTML('<img src="http://www.novaims.unl.pt/images/Logo.png" alt="NOVA IMS University" padding hspace="40"/>'),align ="center"),
+                    p(""),
+                    p(""),
+                    p(""),
+                    p("This app was developed by András Kolbert, Bea Babiak and Carolina Duarte, candidates of Master in Advanced Analytics at Information Management School, NOVA University of Lisbon, Portugal.",
+                    "It is part of the final project of the Descriptive Analytics course (professor Jorge Mendes). The purpose is to present image reconstruction with Principal Component Analysis (PCA) as well as visually show and explain the PCA method.",  style = "font-si16pt"),
+                    p("Fall semester, December 2015.")),
+                box(title = "About the Team", 
+                    width = 4,
+                    height =550,
+                    solidHeader = TRUE, 
+                    status = "primary",
+                   p(HTML('<head>
+                            <script src="//platform.linkedin.com/in.js" type="text/javascript"></script>
+                            <script type="IN/MemberProfile" data-id="https://www.linkedin.com/in/beababiak" data-format="inline" data-related="false"></script>
+                         </head>'),align = "center"),
+                    p(HTML('<head>
+                                <script src="//platform.linkedin.com/in.js" type="text/javascript"></script>
+                                <script type="IN/MemberProfile" data-id="https://www.linkedin.com/in/carolinalmeidaduarte" data-format="inline" data-related="false"></script>
+                         </head>'),align = "center"),
+                    p(HTML('<head>
+                                <script src="//platform.linkedin.com/in.js" type="text/javascript"></script>
+                                <script type="IN/MemberProfile" data-id="https://www.linkedin.com/in/andraskolbert" data-format="inline" data-related="false"></script>
+                        </head>'),align = "center")
+                    )
             )
       )
       
