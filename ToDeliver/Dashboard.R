@@ -28,9 +28,9 @@ library(jpeg)
 
 
 # Set Working Directory# ###SET TO YOUR  OWN GITHUB DIRECTORY!!!###
-#setwd("C:\\Users\\-Andris\\Documents\\GitHub\\DA-project\\SHINY")
-#setwd("C:\\Users\\closer\\Documents\\GitHub\\DA-project\\SHINY")
-setwd("C:\\Users\\Carolina\\Documents\\GitHub\\DA-project\\SHINY")
+#setwd("C:\\Users\\-Andris\\Documents\\GitHub\\DA-project\\ToDeliver")
+#setwd("C:\\Users\\closer\\Documents\\GitHub\\DA-project\\ToDeliver")
+setwd("C:\\Users\\Carolina\\Documents\\GitHub\\DA-project\\ToDeliver")
 
 
 ############################################
@@ -373,7 +373,7 @@ server <- function(input, output,session) {
     
     
     # -1- perentage of total variation explained by the components (first 15)
-    perc_exp<-g$values/ncol(A) #dim(original)[2]
+    perc_exp<-g$values/sum(g$values)
     
     cum_exp<-c(perc_exp[1], sum(perc_exp[1:2]), sum(perc_exp[1:3]), 
                sum(perc_exp[1:4]),sum(perc_exp[1:5]),sum(perc_exp[1:6]),
@@ -394,8 +394,8 @@ server <- function(input, output,session) {
       
       #the number of Principal Components that should be considered: factors with 
       #eigenvalues greater than 1
-      Kaiser <- sum(table_exp[,1] > 1)
-      paste0("According to Kaiser, we should keep the principal components with eigenvalues greater than 1. In our case the number of principal components to keep by the Kaiser criterion is ",
+      Kaiser <- sum(table_exp[,1] > sum(g$values)/ncol(A))
+      paste0("According to Kaiser, we should keep the principal components with eigenvalues greater than the average. In our case the number of principal components to keep by the Kaiser criterion is ",
              Kaiser,
              ".")
     })
